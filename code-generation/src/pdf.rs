@@ -1,17 +1,15 @@
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
-use quote::quote;
 use syn::{
-    Ident, Item, ItemFn, ItemStruct, Path, Result, Token,
+    Item, ItemFn, ItemStruct, Result,
     parse::{Parse, ParseStream},
-    parse_macro_input,
     spanned::Spanned,
 };
 
 pub struct PdfInput {
     pub pdf_struct: ItemStruct,
     pub distribution: ItemFn,
+    pub likelihood: Option<ItemFn>,
     pub norm: Option<ItemFn>,
 }
 
@@ -19,6 +17,7 @@ impl Parse for PdfInput {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut pdf_struct = None;
         let mut distribution = None;
+        let mut likelihood = None;
         let mut norm = None;
         while !input.is_empty() {
             let item: Item = input.parse()?;
@@ -41,10 +40,19 @@ impl Parse for PdfInput {
                             if distribution.is_some() {
                                 return Err(syn::Error::new(
                                     f.sig.ident.span(),
-                                    "duplicate function definition for 'value'",
+                                    "duplicate function definition for 'distribution'",
                                 ));
                             }
                             distribution = Some(f);
+                        }
+                        "likelihood" => {
+                            if likelihood.is_some() {
+                                return Err(syn::Error::new(
+                                    f.sig.ident.span(),
+                                    "duplicate function definition for 'likelihood'",
+                                ));
+                            }
+                            likelihood = Some(f);
                         }
                         "norm" => {
                             if norm.is_some() {
@@ -58,7 +66,7 @@ impl Parse for PdfInput {
                         _ => {
                             return Err(syn::Error::new(
                                 f.sig.ident.span(),
-                                "PDF definition can only contain 'distribution' and 'norm' functions",
+                                "PDF definition can only contain 'distribution' 'likelihood', and 'norm' functions",
                             ));
                         }
                     }
@@ -87,6 +95,7 @@ impl Parse for PdfInput {
         Ok(PdfInput {
             pdf_struct,
             distribution,
+            likelihood,
             norm,
         })
     }

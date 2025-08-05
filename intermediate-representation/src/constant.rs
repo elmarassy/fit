@@ -26,4 +26,10 @@ impl Constant {
     pub fn new_int(number: i32) -> Self {
         Self::Integer(number)
     }
+    pub fn negate(&self) -> Self {
+        match &self {
+            Self::Float(num) => Self::Float(-num),
+            Self::Integer(num) => Self::Integer(-num),
+        }
+    }
 }

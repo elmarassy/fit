@@ -1,4 +1,5 @@
 pub mod data;
+pub mod generation;
 pub mod parameter;
 
 pub fn add(left: u64, right: u64) -> u64 {

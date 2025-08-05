@@ -1,6 +1,7 @@
+use intermediate_representation::{builtin::Builtin, expression::Node};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::parse_macro_input;
+use syn::{Ident, parse_macro_input, spanned::Spanned};
 
 mod parse;
 mod pdf;
@@ -36,9 +37,10 @@ pub fn define_model(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let pdf_struct = &pdf_input.pdf_struct;
     let value_fn = &pdf_input.distribution;
+    let likelihood_fn = &pdf_input.likelihood;
     let norm_fn = &pdf_input.norm;
 
-    let expr = match parse::build_graph(pdf_struct, value_fn) {
+    let mut value = match parse::build_graph(pdf_struct, value_fn) {
         Ok(e) => e,
         Err(e) => {
             return syn::Error::new_spanned(value_fn, e.to_string())
@@ -47,7 +49,35 @@ pub fn define_model(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let res = translation::translate(&expr, expr.len() - 1);
+    let res = translation::translate(
+        &value,
+        value.len() - 1,
+        Ident::new("_value_and_gradient", value_fn.span()),
+    );
+
+    let likelihood = match likelihood_fn {
+        Some(f) => match parse::build_graph(pdf_struct, f) {
+            Ok(e) => translation::translate(
+                &e,
+                e.len() - 1,
+                Ident::new("_likelihood", likelihood_fn.span()),
+            ),
+            Err(e) => {
+                return syn::Error::new_spanned(value_fn, e.to_string())
+                    .to_compile_error()
+                    .into();
+            }
+        },
+        None => {
+            let l = Node::new_builtin(Builtin::Log, value.len() - 1);
+            let index = value.insert(l);
+            translation::translate(
+                &value,
+                index,
+                Ident::new("_likelihood", likelihood_fn.span()),
+            )
+        }
+    };
 
     let output = quote! {
         mod #model_name {
@@ -56,6 +86,8 @@ pub fn define_model(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #pdf_struct
             #value_fn
             #norm_fn
+            #likelihood_fn
+            #likelihood
             #res
         }
     };

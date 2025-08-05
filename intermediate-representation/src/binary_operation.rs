@@ -1,5 +1,5 @@
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use quote::{format_ident, quote};
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum BinaryOperation {
@@ -18,6 +18,7 @@ impl BinaryOperation {
         left_value: Ident,
         right_value: Ident,
     ) -> TokenStream {
+        let num = format_ident!("Number");
         match &self {
             Self::Add => {
                 quote! { let #result = #left_value + #right_value; }
@@ -35,7 +36,7 @@ impl BinaryOperation {
                 quote! { let #result = #left_value.powi(#right_value); }
             }
             Self::PowF => {
-                quote! { let #result = #left_value.powf(#right_value as f64); }
+                quote! { let #result = #left_value.powf(#right_value as #num); }
             }
         }
     }
@@ -47,6 +48,7 @@ impl BinaryOperation {
         left_adj: Ident,
         right_adj: Ident,
     ) -> TokenStream {
+        let num = format_ident!("Number");
         match &self {
             Self::Add => {
                 quote! {
@@ -73,10 +75,10 @@ impl BinaryOperation {
                 }
             }
             Self::PowI => {
-                quote! { #left_adj += #propagate * #right_value as f64 * #left_value.powi(#right_value - 1); }
+                quote! { #left_adj += #propagate * #right_value as #num * #left_value.powi(#right_value - 1); }
             }
             Self::PowF => {
-                quote! { #left_adj += #propagate * #right_value * #left_value.powf(#right_value - 1.0f64); }
+                quote! { #left_adj += #propagate * #right_value * #left_value.powf(#right_value - 1.0 as #num); }
             }
         }
     }

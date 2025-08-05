@@ -8,7 +8,7 @@ use intermediate_representation::{
     expression::{ExpressionGraph, Node, NodeId},
 };
 
-pub fn translate(graph: &ExpressionGraph, output_id: NodeId) -> TokenStream {
+pub fn translate(graph: &ExpressionGraph, output_id: NodeId, signature: Ident) -> TokenStream {
     let mut parameter_map: HashMap<usize, usize> = HashMap::new();
     let mut data_map: HashMap<usize, usize> = HashMap::new();
     let sorted_nodes = graph.topological_sort(output_id);
@@ -54,11 +54,10 @@ pub fn translate(graph: &ExpressionGraph, output_id: NodeId) -> TokenStream {
         .iter()
         .map(|&id| {
             let a_id = adj_name(id);
-            let a_id = adj_name(id);
             if id == output_id {
-                quote! { let mut #a_id = 1.0f64; }
+                quote! { let mut #a_id = 1.0; }
             } else {
-                quote! { let mut #a_id = 0.0f64; }
+                quote! { let mut #a_id = 0.0; }
             }
         })
         .collect();
@@ -95,7 +94,7 @@ pub fn translate(graph: &ExpressionGraph, output_id: NodeId) -> TokenStream {
     };
 
     let function_signature = quote! {
-        pub fn _value_and_gradient(#parameters, #data) -> (Number, [Number; #parameter_cols])
+        pub fn #signature(#parameters, #data) -> (Number, [Number; #parameter_cols])
     };
 
     let mut input_adj_names = Vec::new();

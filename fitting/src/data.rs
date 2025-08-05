@@ -12,3 +12,12 @@ pub struct Data {
     name: String,
     distribution: Distribution,
 }
+
+impl Data {
+    pub fn new(name: &str, distribution: Distribution) -> Self {
+        Self {
+            name: name.to_string(),
+            distribution,
+        }
+    }
+}

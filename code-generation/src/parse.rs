@@ -1,10 +1,8 @@
-use fitting::{data::Data, parameter::Parameter};
 use intermediate_representation::{
     binary_operation::BinaryOperation,
     builtin::Builtin,
-    expression::{self, ExpressionGraph, Node, NodeId, Number},
+    expression::{ExpressionGraph, Node, NodeId, Number},
 };
-use quote::ToTokens;
 
 use std::collections::HashMap;
 use syn::{
@@ -76,10 +74,40 @@ fn build_node(
             _ => Err(syn::Error::new_spanned(lit, "Unsupported literal")),
         },
         Expr::Paren(inner) => build_node(graph, node_map, &inner.expr),
+        Expr::Unary(expr_unary) => {
+            if let syn::UnOp::Neg(_) = expr_unary.op {
+                let inner_node = build_node(graph, node_map, &expr_unary.expr)?;
+                if let Node::Constant(value) = inner_node {
+                    let negative = Node::Constant(value.negate());
+                    graph.insert(negative.clone());
+                    return Ok(negative);
+                }
+                let index = graph.insert(inner_node);
+                let zero = graph.insert(Node::Constant(
+                    intermediate_representation::constant::Constant::Float(0.0),
+                ));
+                return Ok(Node::BinaryOperation(BinaryOperation::Sub, zero, index));
+            }
+            Err(syn::Error::new_spanned(
+                expr_unary,
+                "Unsupported unary operator",
+            ))
+        }
+        Expr::Cast(expr_cast) => {
+            let inner_node = build_node(graph, node_map, &expr_cast.expr)?;
 
+            if let syn::Type::Path(type_path) = &*expr_cast.ty {
+                let ident = &type_path.path.segments.last().unwrap().ident;
+                let allowed = ["Number"];
+                if !allowed.contains(&ident.to_string().as_str()) {
+                    return Err(syn::Error::new_spanned(ident, "unsupported cast type"));
+                }
+            }
+
+            Ok(inner_node)
+        }
         Expr::MethodCall(method_call) => {
             let method_name = method_call.method.to_string();
-            println!("RUNNING");
             if method_call.args.is_empty() {
                 if let Some(builtin) = Builtin::rust_mappings(&method_name) {
                     let receiver_node = build_node(graph, node_map, &method_call.receiver)?;
@@ -133,7 +161,7 @@ fn build_node(
             };
             Ok(build_node(graph, node_map, ret_expr)?)
         }
-        _ => Err(syn::Error::new_spanned(expr, "Unsupported expression111")),
+        _ => Err(syn::Error::new_spanned(expr, "Unsupported expression")),
     }
 }
 
