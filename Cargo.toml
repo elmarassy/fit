@@ -1,0 +1,23 @@
+[package]
+name = "fit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+code-generation = { path = "./code-generation/" }
+intermediate-representation = { path = "./intermediate-representation/" }
+fitting = { path = "./fitting/" }
+rand = "0.9.2"
+
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[profile.release]
+opt-level = 3
+debug = false       
+rpath = false       
+lto = "fat"          
+codegen-units = 1  
+panic = "unwind"  
+incremental = false  
+verflow-checks = false
