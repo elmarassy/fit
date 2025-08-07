@@ -1,10 +1,10 @@
-use intermediate_representation::expression::Number;
+use intermediate_representation::Float;
 
 #[derive(Debug, Clone)]
 pub enum Distribution {
-    Uniform(Number, Number),
-    Exponential(Number, Option<[Number; 2]>),
-    Gaussian(Number, Number, Option<[Number; 2]>),
+    Uniform(Float, Float),
+    Exponential(Float, Option<[Float; 2]>),
+    Gaussian(Float, Float, Option<[Float; 2]>),
 }
 
 #[derive(Debug, Clone)]

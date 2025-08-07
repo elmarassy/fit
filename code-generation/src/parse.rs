@@ -1,13 +1,14 @@
 use intermediate_representation::{
+    Float, FloatConsts,
     binary_operation::BinaryOperation,
     builtin::Builtin,
-    expression::{ExpressionGraph, Node, NodeId, Number},
+    expression::{ExpressionGraph, Node, NodeId},
 };
 
 use std::collections::HashMap;
 use syn::{
-    Error, Expr, Fields, FnArg, Ident, ItemFn, ItemStruct, Pat, PatIdent, Result, Stmt, Type,
-    TypePath, spanned::Spanned,
+    Error, Expr, ExprPath, Fields, FnArg, Ident, ItemFn, ItemStruct, Pat, PatIdent, Result, Stmt,
+    Type, TypePath, spanned::Spanned,
 };
 
 fn build_node(
@@ -65,11 +66,30 @@ fn build_node(
             };
             return Ok(Node::new_binary_operation(binop, left, right));
         }
-        Expr::Path(path) => {
-            Ok(graph.get_node(*node_map.get(&path.path.segments[0].ident).unwrap()))
+        Expr::Path(ExprPath { path, .. }) => {
+            let segments: Vec<_> = path.segments.iter().collect();
+            if segments.len() == 1 {
+                Ok(graph.get_node(*node_map.get(&path.segments[0].ident).unwrap()))
+            } else if segments.len() == 2 && segments[0].ident == "Float" {
+                match segments[1].ident.to_string().as_str() {
+                    "PI" => return Ok(Node::new_float(Float::PI)),
+                    "E" => return Ok(Node::new_float(Float::E)),
+                    _ => {
+                        return Err(syn::Error::new_spanned(
+                            expr,
+                            format!("unsupported constant: {}", segments[1].ident.to_string()),
+                        ));
+                    }
+                }
+            } else {
+                Err(syn::Error::new_spanned(
+                    expr,
+                    format!("unsupported constant"),
+                ))
+            }
         }
         Expr::Lit(syn::ExprLit { lit, .. }) => match lit {
-            syn::Lit::Float(f) => Ok(Node::new_float(f.base10_parse::<Number>()?)),
+            syn::Lit::Float(f) => Ok(Node::new_float(f.base10_parse::<Float>()?)),
             syn::Lit::Int(i) => Ok(Node::new_integer(i.base10_parse::<i32>()?)),
             _ => Err(syn::Error::new_spanned(lit, "Unsupported literal")),
         },
@@ -98,7 +118,7 @@ fn build_node(
 
             if let syn::Type::Path(type_path) = &*expr_cast.ty {
                 let ident = &type_path.path.segments.last().unwrap().ident;
-                let allowed = ["Number"];
+                let allowed = ["Float"];
                 if !allowed.contains(&ident.to_string().as_str()) {
                     return Err(syn::Error::new_spanned(ident, "unsupported cast type"));
                 }
@@ -152,6 +172,7 @@ fn build_node(
             };
             Err(syn::Error::new_spanned(call, "Unsupported function call"))
         }
+
         Expr::Return(ret) => {
             let Some(ret_expr) = &ret.expr else {
                 return Err(syn::Error::new_spanned(

@@ -1,12 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::Float;
 use crate::binary_operation::BinaryOperation;
 use crate::builtin::Builtin;
 use crate::constant::Constant;
 use crate::variable::Variable;
 
 pub type NodeId = usize;
-pub type Number = f64;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum Node {
@@ -17,7 +17,7 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn new_float(constant: Number) -> Node {
+    pub fn new_float(constant: Float) -> Node {
         Node::Constant(Constant::new_float(constant))
     }
     pub fn new_integer(constant: i32) -> Node {

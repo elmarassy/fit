@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 
-intermediate-representation = { path = "../intermediate-representation/" }
+intermediate-representation = { path = "../intermediate-representation/", default-features = false, features = ["f64"]}
+

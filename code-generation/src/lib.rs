@@ -19,7 +19,7 @@ pub fn define_model(_attr: TokenStream, item: TokenStream) -> TokenStream {
         None => {
             return syn::Error::new_spanned(
                 input_mod,
-                "#[define_pdf] only works on inline modules, not mod declarations",
+                "#[define_model] only works on inline modules, not mod declarations",
             )
             .to_compile_error()
             .into();
@@ -80,6 +80,8 @@ pub fn define_model(_attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let output = quote! {
+
+        use intermediate_representation::{Float, FloatConsts};
         mod #model_name {
             use super::*;
 

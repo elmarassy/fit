@@ -85,16 +85,16 @@ pub fn translate(graph: &ExpressionGraph, output_id: NodeId, signature: Ident) -
 
     let data_cols = data_map.len();
     let data = quote! {
-        data: [Number; #data_cols]
+        data: [Float; #data_cols]
     };
 
     let parameter_cols = parameter_map.len();
     let parameters = quote! {
-        parameters: [Number; #parameter_cols]
+        parameters: [Float; #parameter_cols]
     };
 
     let function_signature = quote! {
-        pub fn #signature(#parameters, #data) -> (Number, [Number; #parameter_cols])
+        pub fn #signature(#parameters, #data) -> (Float, [Float; #parameter_cols])
     };
 
     let mut input_adj_names = Vec::new();

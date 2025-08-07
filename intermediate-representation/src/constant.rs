@@ -1,10 +1,10 @@
 use std::hash::{Hash, Hasher};
 
-use crate::expression::Number;
+use crate::Float;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Constant {
-    Float(Number),
+    Float(Float),
     Integer(i32),
 }
 
@@ -20,7 +20,7 @@ impl Hash for Constant {
 impl Eq for Constant {}
 
 impl Constant {
-    pub fn new_float(number: Number) -> Self {
+    pub fn new_float(number: Float) -> Self {
         Self::Float(number)
     }
     pub fn new_int(number: i32) -> Self {

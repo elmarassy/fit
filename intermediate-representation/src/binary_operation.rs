@@ -18,7 +18,7 @@ impl BinaryOperation {
         left_value: Ident,
         right_value: Ident,
     ) -> TokenStream {
-        let num = format_ident!("Number");
+        let num = format_ident!("Float");
         match &self {
             Self::Add => {
                 quote! { let #result = #left_value + #right_value; }
@@ -48,7 +48,7 @@ impl BinaryOperation {
         left_adj: Ident,
         right_adj: Ident,
     ) -> TokenStream {
-        let num = format_ident!("Number");
+        let num = format_ident!("Float");
         match &self {
             Self::Add => {
                 quote! {
